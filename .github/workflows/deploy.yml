@@ -46,4 +46,4 @@ jobs:
             nvm use default
             yarn install
             yarn build
-            pm2 restart tm-backend
+            pm2 restart api
