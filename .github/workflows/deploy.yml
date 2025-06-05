@@ -19,10 +19,10 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: yarn install
+        run: npm install
 
       - name: Build project
-        run: yarn build
+        run: npm run build
 
       - name: Copy files to VPS
         uses: appleboy/scp-action@v0.1.4
@@ -44,6 +44,6 @@ jobs:
             export NVM_DIR=~/.nvm
             source $NVM_DIR/nvm.sh
             nvm use default
-            yarn install
-            yarn build
+            npm install
+            npm run build
             pm2 restart api
