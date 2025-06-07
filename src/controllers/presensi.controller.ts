@@ -300,6 +300,10 @@ const getPresensiStatistik = async (
 
     const statistik: Record<string, number> = {};
 
+    let totalHadir = 0;
+    let totalTidakHadir = 0;
+    let totalPresensi = 0;
+
     for (const kategori of kategoriList) {
       const count = await Presensi.count({
         where: {
@@ -311,12 +315,35 @@ const getPresensiStatistik = async (
           ],
         },
       });
+
       statistik[kategori] = count;
+      totalPresensi += count;
+
+      if (kategori === "MASUK_KERJA" || kategori === "DINAS_KERJA") {
+        totalHadir += count;
+      }
+
+      if (kategori === "IZIN_KERJA" || kategori === "CUTI_KERJA") {
+        totalTidakHadir += count;
+      }
     }
+
+    const totalHariDalamBulan = new Date(tahun, bulanAngka, 0).getDate(); // contoh: 30 untuk Juni
+    const persentaseKehadiran = (
+      (totalHadir / totalHariDalamBulan) *
+      100
+    ).toFixed(2);
 
     res.status(200).json({
       message: "Statistik berhasil diambil",
-      data: statistik,
+      data: {
+        total_presensi: totalPresensi,
+        total_hari_dalam_bulan: totalHariDalamBulan,
+        total_hadir: totalHadir,
+        total_tidak_hadir: totalTidakHadir,
+        persentase_kehadiran: `${persentaseKehadiran}%`,
+        per_kategori: statistik,
+      },
     });
   } catch (error) {
     next(error);
