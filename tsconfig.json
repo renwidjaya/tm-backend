@@ -1,11 +1,24 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "CommonJS",
+    "target": "ES6",
+    "module": "commonjs",
     "rootDir": "./src",
-    "outDir": "./dist",
+    "baseUrl": "./",
+    "paths": {
+      "@utils/*": ["src/utils/*"],
+      "@configs/*": ["src/configs/*"],
+      "@models/*": ["src/models/*"],
+      "@routes/*": ["src/routes/*"],
+      "@middlewares/*": ["src/middlewares/*"],
+      "@middlewares": ["src/middlewares"],
+      "@controllers/*": ["src/controllers/*"]
+    },
+    "outDir": "./build",
     "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true
-  }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "logs", "public"]
 }
