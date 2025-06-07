@@ -6,7 +6,6 @@ import {
   CreationOptional,
 } from "sequelize";
 import db from "@configs/database";
-import Karyawan from "./karyawan.model";
 
 export enum EnumKategoriPresensi {
   MASUK_KERJA = "MASUK_KERJA",
@@ -49,6 +48,7 @@ class Presensi
   declare foto_pulang: string;
   declare total_jam_lembur: string;
   declare kategori: EnumKategoriPresensi;
+  declare presensis?: Presensi[];
 }
 
 Presensi.init(

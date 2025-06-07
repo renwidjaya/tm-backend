@@ -42,6 +42,7 @@ class Karyawan
   declare image_profil: string;
   declare created_at: CreationOptional<Date>;
   declare updated_at: CreationOptional<Date>;
+  declare presensis?: Presensi[];
 }
 
 Karyawan.init(
