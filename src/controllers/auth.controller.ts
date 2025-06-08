@@ -10,16 +10,14 @@ const register = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const {
-    nama,
-    email,
-    password,
-    role,
-    nip,
-    jabatan,
-    alamat_lengkap,
-    image_profil,
-  } = req.body;
+  const { nama, email, password, role, nip, jabatan, alamat_lengkap } =
+    req.body;
+
+  const image_profil = req.file?.filename;
+
+  console.log("====================================");
+  console.log(image_profil);
+  console.log("====================================");
 
   const t = await db.transaction();
 
@@ -50,20 +48,23 @@ const register = async (
         nip,
         jabatan,
         alamat_lengkap,
+        image_profil,
       },
       { transaction: t }
     );
 
     await t.commit();
 
-    res
-      .status(201)
-      .json({ message: "User dan karyawan berhasil dibuat", user: newUser });
+    res.status(201).json({
+      message: "User dan karyawan berhasil dibuat",
+      user: newUser,
+    });
   } catch (err) {
     await t.rollback();
     next(err);
   }
 };
+
 
 const login = async (
   req: Request,

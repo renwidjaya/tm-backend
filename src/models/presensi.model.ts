@@ -19,14 +19,14 @@ export interface IPresensiAttributes {
   id_absensi: number;
   id_karyawan: number;
   tanggal: Date;
-  jam_masuk: string;
-  jam_pulang: string;
-  lokasi_masuk: string;
-  lokasi_pulang: string;
-  foto_masuk: string;
-  foto_pulang: string;
-  total_jam_lembur: string;
-  kategori: EnumKategoriPresensi;
+  jam_masuk?: string;
+  jam_pulang?: string;
+  lokasi_masuk?: string;
+  lokasi_pulang?: string;
+  foto_masuk?: string;
+  foto_pulang?: string;
+  total_jam_lembur?: string;
+  kategori?: EnumKategoriPresensi;
 }
 
 // Field yang optional saat create

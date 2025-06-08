@@ -4,6 +4,7 @@ import { col, fn, Op, where } from "sequelize";
 import { Karyawan, Presensi } from "@models/index";
 import CustomError from "@middlewares/error-handler";
 import { NextFunction, Request, Response } from "express";
+import { readUploadedFile } from "@utils/files";
 
 /**
  * Get All Karyawan
@@ -141,38 +142,41 @@ const createPresensi = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const {
-      id_karyawan,
-      tanggal,
-      jam_masuk,
-      jam_pulang,
-      lokasi_masuk,
-      lokasi_pulang,
-      foto_masuk,
-      foto_pulang,
-      total_jam_lembur,
-      kategori,
-    } = req.body;
+    const { id_karyawan, tanggal, jam_masuk, lokasi_masuk, kategori } =
+      req.body;
 
     const karyawan = await Karyawan.findByPk(id_karyawan);
     if (!karyawan) {
       throw new CustomError(httpCode.badRequest, "Karyawan tidak ditemukan");
     }
 
+    const existing = await Presensi.findOne({
+      where: { id_karyawan, tanggal },
+    });
+
+    if (existing) {
+      throw new CustomError(
+        httpCode.badRequest,
+        "Karyawan sudah absen hari ini"
+      );
+    }
+
+    const foto_masuk = req.file?.filename;
+
+    if (!foto_masuk) {
+      throw new CustomError(httpCode.badRequest, "Foto masuk wajib diunggah");
+    }
+
     const data = await Presensi.create({
       id_karyawan,
       tanggal,
       jam_masuk,
-      jam_pulang,
       lokasi_masuk,
-      lokasi_pulang,
       foto_masuk,
-      foto_pulang,
-      total_jam_lembur,
       kategori,
     });
 
-    res.status(201).json({ message: "Presensi berhasil ditambahkan", data });
+    res.status(201).json({ message: "Absen masuk berhasil", data });
   } catch (error) {
     next(error);
   }
@@ -191,41 +195,71 @@ const updatePresensi = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const { jam_pulang, lokasi_pulang, total_jam_lembur } = req.body;
 
-    const presensi = await Presensi.findByPk(id);
+    const { id_presensi } = req.params;
+
+    const presensi = await Presensi.findByPk(id_presensi);
     if (!presensi) {
-      throw new CustomError(httpCode.notFound, "Data presensi tidak ditemukan");
+      throw new CustomError(httpCode.notFound, "Presensi tidak ditemukan");
     }
 
-    const {
-      tanggal,
-      jam_masuk,
-      jam_pulang,
-      lokasi_masuk,
-      lokasi_pulang,
-      foto_masuk,
-      foto_pulang,
-      total_jam_lembur,
-      kategori,
-    } = req.body;
+    const foto_pulang = req.file?.filename;
+
+    if (!foto_pulang) {
+      throw new CustomError(httpCode.badRequest, "Foto pulang wajib diunggah");
+    }
 
     await presensi.update({
-      tanggal,
-      jam_masuk,
       jam_pulang,
-      lokasi_masuk,
       lokasi_pulang,
-      foto_masuk,
       foto_pulang,
       total_jam_lembur,
-      kategori,
     });
 
-    res.status(200).json({
-      message: "Data presensi berhasil diperbarui",
-      data: presensi,
+    res.status(200).json({ message: "Absen pulang berhasil", data: presensi });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get Presensi Detail
+ * @param req
+ * @param res
+ * @param next
+ * @returns
+ */
+const getPresensiDetail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id_karyawan, tanggal } = req.body;
+
+    if (!id_karyawan || !tanggal) {
+      throw new CustomError(
+        httpCode.badRequest,
+        "ID karyawan dan tanggal wajib diisi"
+      );
+    }
+
+    const presensi = await Presensi.findOne({
+      where: {
+        id_karyawan: Number(id_karyawan),
+        tanggal: String(tanggal),
+      },
     });
+
+    if (!presensi) {
+      res.status(404).json({ message: "Presensi tidak ditemukan" });
+      return;
+    }
+
+    res
+      .status(200)
+      .json({ message: "Detail presensi ditemukan", data: presensi });
   } catch (error) {
     next(error);
   }
@@ -445,13 +479,26 @@ const downloadPresensiExcel = async (
   }
 };
 
+const getProfilPhoto = (req: Request, res: Response): void => {
+  const filename = readUploadedFile("profil", req.params.filename);
+  res.sendFile(filename);
+};
+
+const getPresensiPhoto = (req: Request, res: Response): void => {
+  const filename = readUploadedFile("presensi", req.params.filename);
+  res.sendFile(filename);
+};
+
 export default {
   getAllKaryawan,
   getAllPresensi,
   getDetailPresensi,
   createPresensi,
   updatePresensi,
+  getPresensiDetail,
   deletePresensi,
   getPresensiStatistik,
   downloadPresensiExcel,
+  getProfilPhoto,
+  getPresensiPhoto,
 };
