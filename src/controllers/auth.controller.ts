@@ -29,13 +29,17 @@ const login = async (
       return;
     }
 
-    const user = found.get() as IUserAttributes;
-
+    const user = found.get();
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       res.status(401).json({ message: "Password salah" });
       return;
     }
+
+    // Ambil data karyawan
+    const karyawan = await Karyawan.findOne({
+      where: { id_user: user.id_user },
+    });
 
     const token = jwt.sign(
       { id: user.id_user, role: user.role },
@@ -47,9 +51,16 @@ const login = async (
       message: "Login berhasil",
       data: {
         id_user: user.id_user,
+        id_karyawan: karyawan?.id_karyawan,
         nama: user.nama,
         email: user.email,
         role: user.role,
+        ...(karyawan && {
+          nip: karyawan.nip,
+          jabatan: karyawan.jabatan,
+          alamat_lengkap: karyawan.alamat_lengkap,
+          image_profil: karyawan.image_profil,
+        }),
       },
       token,
     });
