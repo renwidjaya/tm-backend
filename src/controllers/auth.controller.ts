@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import db from "@configs/database";
@@ -7,10 +9,10 @@ import User, { IUserAttributes } from "@models/user.model";
 
 /**
  * Login
- * @param req 
- * @param res 
- * @param next 
- * @returns 
+ * @param req
+ * @param res
+ * @param next
+ * @returns
  */
 const login = async (
   req: Request,
@@ -58,10 +60,10 @@ const login = async (
 
 /**
  * Register
- * @param req 
- * @param res 
- * @param next 
- * @returns 
+ * @param req
+ * @param res
+ * @param next
+ * @returns
  */
 const register = async (
   req: Request,
@@ -125,10 +127,10 @@ const register = async (
 
 /**
  * Edit User
- * @param req 
- * @param res 
- * @param next 
- * @returns 
+ * @param req
+ * @param res
+ * @param next
+ * @returns
  */
 const editUser = async (
   req: Request,
@@ -183,7 +185,21 @@ const editUser = async (
       karyawan.nip = nip;
       karyawan.jabatan = jabatan;
       karyawan.alamat_lengkap = alamat_lengkap;
+
       if (image_profil) {
+        // Hapus file lama jika ada
+        if (karyawan.image_profil) {
+          const oldPath = path.join(
+            __dirname,
+            "../../uploads/profil",
+            karyawan.image_profil
+          );
+          if (fs.existsSync(oldPath)) {
+            fs.unlinkSync(oldPath);
+          }
+        }
+
+        // Simpan file baru
         karyawan.image_profil = image_profil;
       }
       await karyawan.save({ transaction: t });
