@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import cors from "cors";
+import path from "path";
 import helmet from "helmet";
 import bodyParser from "body-parser";
 import compression from "compression";
@@ -34,6 +35,13 @@ app.get("/health", async (req, res) => {
     });
   }
 });
+
+// Serve static files
+app.use("/profil", express.static(path.join(__dirname, "../uploads/profil")));
+app.use(
+  "/presensi",
+  express.static(path.join(__dirname, "../uploads/presensi"))
+);
 
 app.use("/api", apiRoutes);
 
