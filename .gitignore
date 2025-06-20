@@ -1,2 +1,6 @@
 .env
-/node_modules
+node_modules/
+
+uploads/*.log
+uploads/*.tmp
+uploads/profil/.gitkeep
