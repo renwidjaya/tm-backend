@@ -5,6 +5,7 @@ import { Karyawan, Presensi } from "@models/index";
 import CustomError from "@middlewares/error-handler";
 import { NextFunction, Request, Response } from "express";
 import { readUploadedFile } from "@utils/files";
+import { EnumKategoriPresensi } from "@models/presensi.model";
 
 /**
  * Get All Karyawan
@@ -479,6 +480,78 @@ const downloadPresensiExcel = async (
   }
 };
 
+export const getMonthlyReportAll = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const dayLabels = ["S", "S", "R", "K", "J", "S", "M"]; // Senin→Minggu
+
+    const { tahunbulan } = req.query as { tahunbulan?: string };
+    if (
+      !tahunbulan ||
+      typeof tahunbulan !== "string" ||
+      !tahunbulan.match(/^\d{4}-\d{2}$/)
+    ) {
+      throw new CustomError(
+        httpCode.badRequest,
+        "Format tahunbulan tidak valid (YYYY-MM)"
+      );
+    }
+
+    const [year, month] = tahunbulan.split("-").map(Number);
+
+    // ambil semua karyawan + presensi MASUK_KERJA di bulan itu
+    const karyawans = await Karyawan.findAll({
+      include: [
+        {
+          model: Presensi,
+          as: "presensis",
+          where: {
+            kategori: EnumKategoriPresensi.MASUK_KERJA,
+            [Op.and]: [
+              where(fn("MONTH", col("presensis.tanggal")), month),
+              where(fn("YEAR", col("presensis.tanggal")), year),
+            ],
+          },
+          required: false,
+        },
+      ],
+    });
+
+    // inisialisasi counter per hari (0=Senin ...6=Minggu)
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+
+    // loop tiap presensi dari tiap karyawan
+    karyawans.forEach((k) => {
+      k.presensis?.forEach((p) => {
+        // DATEONLY jadi string, kita parse ke Date
+        const date = new Date(p.tanggal as any);
+        const jsDay = date.getDay(); // 0=Sun..6=Sat
+        const idx = jsDay === 0 ? 6 : jsDay - 1; // shift → 0=Mon..6=Sun
+        counts[idx]++;
+      });
+    });
+
+    // bangun payload chart
+    const chart = counts.map((c, i) => ({
+      label: dayLabels[i],
+      count: c,
+    }));
+
+    res.json({
+      message: "Report semua karyawan berhasil diambil",
+      data: {
+        periode: tahunbulan,
+        chart,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const getProfilPhoto = (req: Request, res: Response): void => {
   const filename = readUploadedFile("profil", req.params.filename);
   res.sendFile(filename);
@@ -498,6 +571,7 @@ export default {
   getPresensiDetail,
   deletePresensi,
   getPresensiStatistik,
+  getMonthlyReportAll,
   downloadPresensiExcel,
   getProfilPhoto,
   getPresensiPhoto,

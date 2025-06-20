@@ -30,6 +30,8 @@ router.post("/statistik", controller.getPresensiStatistik);
 
 router.get("/export", controller.downloadPresensiExcel);
 
+router.get("/report/all", controller.getMonthlyReportAll);
+
 router.get("/profil/:filename", controller.getProfilPhoto);
 
 router.get("/presensi/:filename", controller.getPresensiPhoto);
