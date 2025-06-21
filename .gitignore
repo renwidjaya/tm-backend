@@ -1,6 +1,16 @@
-.env
+# Dependency
 node_modules/
 
-uploads/*.log
-uploads/*.tmp
-uploads/profil/.gitkeep
+# Env
+.env
+
+# Build & Logs
+dist/
+*.log
+
+# Uploads
+uploads/
+!uploads/profil/.gitkeep
+
+# Firebase Service Account
+src/configs/firebase-admin.json

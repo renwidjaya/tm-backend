@@ -1,11 +1,13 @@
-import fs from "fs";
-import path from "path";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import db from "@configs/database";
+import {
+  deleteFromFirebase,
+  uploadToFirebase,
+} from "@utils/upload-to-firebase";
+import User from "@models/user.model";
 import Karyawan from "@models/karyawan.model";
 import { NextFunction, Request, Response } from "express";
-import User, { IUserAttributes } from "@models/user.model";
 
 /**
  * Login
@@ -84,12 +86,6 @@ const register = async (
   const { nama, email, password, role, nip, jabatan, alamat_lengkap } =
     req.body;
 
-  const image_profil = req.file?.filename;
-
-  console.log("====================================");
-  console.log(image_profil);
-  console.log("====================================");
-
   const t = await db.transaction();
 
   try {
@@ -97,18 +93,16 @@ const register = async (
     if (existing) {
       await t.rollback();
       res.status(400).json({ message: "Email sudah terdaftar." });
-      return;
     }
+
+    const image_profil = req.file?.path
+      ? await uploadToFirebase(req.file.path, "profil")
+      : undefined;
 
     const hash = await bcrypt.hash(password, 10);
 
     const newUser = await User.create(
-      {
-        nama,
-        email,
-        password: hash,
-        role,
-      },
+      { nama, email, password: hash, role },
       { transaction: t }
     );
 
@@ -151,7 +145,6 @@ const editUser = async (
   const { id_user } = req.params;
   const { nama, email, password, role, nip, jabatan, alamat_lengkap } =
     req.body;
-  const image_profil = req.file?.filename;
 
   const t = await db.transaction();
 
@@ -197,22 +190,20 @@ const editUser = async (
       karyawan.jabatan = jabatan;
       karyawan.alamat_lengkap = alamat_lengkap;
 
-      if (image_profil) {
-        // Hapus file lama jika ada
-        if (karyawan.image_profil) {
-          const oldPath = path.join(
-            __dirname,
-            "../../uploads/profil",
-            karyawan.image_profil
-          );
-          if (fs.existsSync(oldPath)) {
-            fs.unlinkSync(oldPath);
+      // Proses upload jika ada file baru
+      if (req.file?.path) {
+        try {
+          if (karyawan.image_profil) {
+            await deleteFromFirebase(karyawan.image_profil);
           }
+        } catch (err: any) {
+          console.warn("Gagal hapus file lama dari Firebase:", err.message);
         }
 
-        // Simpan file baru
-        karyawan.image_profil = image_profil;
+        const newUrl = await uploadToFirebase(req.file.path, "profil");
+        karyawan.image_profil = newUrl;
       }
+
       await karyawan.save({ transaction: t });
     }
 

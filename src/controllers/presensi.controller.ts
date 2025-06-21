@@ -1,3 +1,4 @@
+import fs from "fs";
 import { Workbook } from "exceljs";
 import { httpCode } from "@utils/prefix";
 import { col, fn, Op, where } from "sequelize";
@@ -6,6 +7,7 @@ import CustomError from "@middlewares/error-handler";
 import { Karyawan, Presensi, User } from "@models/index";
 import { NextFunction, Request, Response } from "express";
 import { EnumKategoriPresensi } from "@models/presensi.model";
+import { uploadToFirebase } from "@utils/upload-to-firebase";
 
 /**
  * Get All Karyawan
@@ -169,18 +171,21 @@ const createPresensi = async (
       );
     }
 
-    const foto_masuk = req.file?.filename;
-
-    if (!foto_masuk) {
+    if (!req.file?.path) {
       throw new CustomError(httpCode.badRequest, "Foto masuk wajib diunggah");
     }
+
+    const uploadedUrl = await uploadToFirebase(req.file.path, "presensi");
+
+    // Hapus file lokal setelah di-upload
+    fs.unlinkSync(req.file.path);
 
     const data = await Presensi.create({
       id_karyawan,
       tanggal,
       jam_masuk,
       lokasi_masuk,
-      foto_masuk,
+      foto_masuk: uploadedUrl,
       kategori,
     });
 
@@ -204,7 +209,6 @@ const updatePresensi = async (
 ): Promise<void> => {
   try {
     const { jam_pulang, lokasi_pulang, total_jam_lembur } = req.body;
-
     const { id_presensi } = req.params;
 
     const presensi = await Presensi.findByPk(id_presensi);
@@ -212,16 +216,19 @@ const updatePresensi = async (
       throw new CustomError(httpCode.notFound, "Presensi tidak ditemukan");
     }
 
-    const foto_pulang = req.file?.filename;
-
-    if (!foto_pulang) {
+    if (!req.file?.path) {
       throw new CustomError(httpCode.badRequest, "Foto pulang wajib diunggah");
     }
+
+    const uploadedUrl = await uploadToFirebase(req.file.path, "presensi");
+
+    // Hapus file lokal setelah di-upload
+    fs.unlinkSync(req.file.path);
 
     await presensi.update({
       jam_pulang,
       lokasi_pulang,
-      foto_pulang,
+      foto_pulang: uploadedUrl,
       total_jam_lembur,
     });
 
