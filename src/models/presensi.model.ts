@@ -65,6 +65,7 @@ Presensi.init(
     tanggal: {
       type: DataTypes.DATEONLY,
       allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
     jam_masuk: {
       type: DataTypes.TIME,

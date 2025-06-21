@@ -677,11 +677,14 @@ const getLastPresensiToday = async (
 ): Promise<void> => {
   const { id } = req.params;
 
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const today = now.toLocaleDateString("sv-SE");
 
   const presensi = await Presensi.findOne({
-    where: { id_karyawan: id, tanggal: today },
-    order: [["tanggal", "DESC"]],
+    where: {
+      id_karyawan: id,
+      tanggal: today,
+    },
   });
 
   res.status(httpCode.ok).json(presensi || null);
