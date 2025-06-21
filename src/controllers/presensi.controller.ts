@@ -1,10 +1,10 @@
 import { Workbook } from "exceljs";
 import { httpCode } from "@utils/prefix";
 import { col, fn, Op, where } from "sequelize";
-import { Karyawan, Presensi } from "@models/index";
-import CustomError from "@middlewares/error-handler";
-import { NextFunction, Request, Response } from "express";
 import { readUploadedFile } from "@utils/files";
+import CustomError from "@middlewares/error-handler";
+import { Karyawan, Presensi, User } from "@models/index";
+import { NextFunction, Request, Response } from "express";
 import { EnumKategoriPresensi } from "@models/presensi.model";
 
 /**
@@ -24,6 +24,13 @@ const getAllKaryawan = async (
     const data = await Karyawan.findAll({
       limit: Number(limit),
       offset: Number(offset),
+      include: [
+        {
+          model: User,
+          as: "user",
+          attributes: ["email", "role"], // ambil yang diperlukan saja
+        },
+      ],
     });
 
     res.status(200).json({ message: "Success", data });
