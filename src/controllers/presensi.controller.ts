@@ -1,6 +1,9 @@
 import fs from "fs";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
 import { Workbook } from "exceljs";
 import { httpCode } from "@utils/prefix";
+import timezone from "dayjs/plugin/timezone";
 import { col, fn, Op, where } from "sequelize";
 import { readUploadedFile } from "@utils/files";
 import CustomError from "@middlewares/error-handler";
@@ -8,6 +11,9 @@ import { Karyawan, Presensi, User } from "@models/index";
 import { NextFunction, Request, Response } from "express";
 import { EnumKategoriPresensi } from "@models/presensi.model";
 import { uploadToFirebase } from "@utils/upload-to-firebase";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 /**
  * Get All Karyawan
@@ -677,8 +683,7 @@ const getLastPresensiToday = async (
 ): Promise<void> => {
   const { id } = req.params;
 
-  const now = new Date();
-  const today = now.toLocaleDateString("sv-SE");
+  const today = dayjs().tz("Asia/Jakarta").format("YYYY-MM-DD");
 
   const presensi = await Presensi.findOne({
     where: {
