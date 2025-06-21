@@ -36,4 +36,6 @@ router.get("/profil/:filename", controller.getProfilPhoto);
 
 router.get("/presensi/:filename", controller.getPresensiPhoto);
 
+router.get("/dashboard", controller.getDashboardStatistik);
+
 export default router;

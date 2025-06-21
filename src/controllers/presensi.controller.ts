@@ -569,6 +569,99 @@ const getPresensiPhoto = (req: Request, res: Response): void => {
   res.sendFile(filename);
 };
 
+const getDashboardStatistik = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const today = new Date();
+    const tahun = today.getFullYear();
+    const bulan = today.getMonth() + 1; // 0-based
+    const tanggalHariIni = today.toISOString().split("T")[0];
+
+    const totalKaryawan = await Karyawan.count();
+
+    const hadirHariIni = await Presensi.count({
+      where: {
+        tanggal: tanggalHariIni,
+        kategori: {
+          [Op.in]: ["MASUK_KERJA", "DINAS_KERJA"],
+        },
+      },
+    });
+
+    const hadirBulanIni = await Presensi.count({
+      where: {
+        [Op.and]: [
+          where(fn("MONTH", col("tanggal")), bulan),
+          where(fn("YEAR", col("tanggal")), tahun),
+        ],
+        kategori: {
+          [Op.in]: ["MASUK_KERJA", "DINAS_KERJA"],
+        },
+      },
+    });
+
+    // Ambil jumlah hari dalam bulan ini
+    const daysInMonth = new Date(tahun, bulan, 0).getDate();
+    const grafikBulanan: number[] = [];
+
+    for (let i = 1; i <= daysInMonth; i++) {
+      const count = await Presensi.count({
+        where: {
+          [Op.and]: [
+            where(fn("DAY", col("tanggal")), i),
+            where(fn("MONTH", col("tanggal")), bulan),
+            where(fn("YEAR", col("tanggal")), tahun),
+          ],
+          kategori: {
+            [Op.in]: ["MASUK_KERJA", "DINAS_KERJA"],
+          },
+        },
+      });
+      grafikBulanan.push(count);
+    }
+
+    // Grafik Mingguan: 7 hari terakhir
+    const grafikMingguan: number[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      const tanggal = d.toISOString().split("T")[0];
+
+      const count = await Presensi.count({
+        where: {
+          tanggal,
+          kategori: {
+            [Op.in]: ["MASUK_KERJA", "DINAS_KERJA"],
+          },
+        },
+      });
+
+      grafikMingguan.push(count);
+    }
+
+    res.status(200).json({
+      message: "Statistik dashboard berhasil diambil",
+      data: {
+        total_karyawan: totalKaryawan,
+        hadir_hari_ini: hadirHariIni,
+        hadir_bulan_ini: hadirBulanIni,
+        periode: `01/${bulan
+          .toString()
+          .padStart(2, "0")}/${tahun} — ${daysInMonth}/${bulan
+          .toString()
+          .padStart(2, "0")}/${tahun}`,
+        grafik_bulanan: grafikBulanan,
+        grafik_mingguan: grafikMingguan,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   getAllKaryawan,
   getAllPresensi,
@@ -582,4 +675,5 @@ export default {
   downloadPresensiExcel,
   getProfilPhoto,
   getPresensiPhoto,
+  getDashboardStatistik,
 };
