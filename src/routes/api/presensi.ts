@@ -38,4 +38,6 @@ router.get("/presensi/:filename", controller.getPresensiPhoto);
 
 router.get("/dashboard", controller.getDashboardStatistik);
 
+router.get("/last/:id", controller.getLastPresensiToday);
+
 export default router;

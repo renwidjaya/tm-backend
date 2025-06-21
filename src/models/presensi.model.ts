@@ -102,7 +102,9 @@ Presensi.init(
   {
     sequelize: db,
     tableName: "t_absensi",
-    timestamps: false,
+    timestamps: true,
+    createdAt: "created_at",
+    updatedAt: "updated_at",
   }
 );
 

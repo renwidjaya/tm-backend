@@ -35,7 +35,7 @@ const getAllKaryawan = async (
       ],
     });
 
-    res.status(200).json({ message: "Success", data });
+    res.status(httpCode.ok).json({ message: "Success", data });
   } catch (error) {
     next(error);
   }
@@ -85,7 +85,7 @@ const getAllPresensi = async (
       ],
     });
 
-    res.status(200).json({ message: "Success", data });
+    res.status(httpCode.ok).json({ message: "Success", data });
   } catch (error) {
     next(error);
   }
@@ -131,7 +131,7 @@ const getDetailPresensi = async (
       throw new CustomError(httpCode.notFound, "Karyawan tidak ditemukan");
     }
 
-    res.status(200).json({
+    res.status(httpCode.ok).json({
       message: "Success",
       data: karyawan,
     });
@@ -232,7 +232,9 @@ const updatePresensi = async (
       total_jam_lembur,
     });
 
-    res.status(200).json({ message: "Absen pulang berhasil", data: presensi });
+    res
+      .status(httpCode.ok)
+      .json({ message: "Absen pulang berhasil", data: presensi });
   } catch (error) {
     next(error);
   }
@@ -273,7 +275,7 @@ const getPresensiDetail = async (
     }
 
     res
-      .status(200)
+      .status(httpCode.ok)
       .json({ message: "Detail presensi ditemukan", data: presensi });
   } catch (error) {
     next(error);
@@ -303,7 +305,7 @@ const deletePresensi = async (
       throw new CustomError(httpCode.notFound, "Data tidak ditemukan");
     }
 
-    res.status(200).json({ message: "Data berhasil dihapus" });
+    res.status(httpCode.ok).json({ message: "Data berhasil dihapus" });
   } catch (error) {
     next(error);
   }
@@ -383,7 +385,7 @@ const getPresensiStatistik = async (
       100
     ).toFixed(2);
 
-    res.status(200).json({
+    res.status(httpCode.ok).json({
       message: "Statistik berhasil diambil",
       data: {
         total_presensi: totalPresensi,
@@ -649,7 +651,7 @@ const getDashboardStatistik = async (
       grafikMingguan.push(count);
     }
 
-    res.status(200).json({
+    res.status(httpCode.ok).json({
       message: "Statistik dashboard berhasil diambil",
       data: {
         total_karyawan: totalKaryawan,
@@ -669,6 +671,22 @@ const getDashboardStatistik = async (
   }
 };
 
+const getLastPresensiToday = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const presensi = await Presensi.findOne({
+    where: { id_karyawan: id, tanggal: today },
+    order: [["tanggal", "DESC"]],
+  });
+
+  res.status(httpCode.ok).json(presensi || null);
+};
+
 export default {
   getAllKaryawan,
   getAllPresensi,
@@ -683,4 +701,5 @@ export default {
   getProfilPhoto,
   getPresensiPhoto,
   getDashboardStatistik,
+  getLastPresensiToday,
 };
