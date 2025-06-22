@@ -20,5 +20,7 @@ router.post(
   controller.editUser
 );
 
+router.delete("/user/:id_user", controller.destroyUser);
+
 
 export default router;

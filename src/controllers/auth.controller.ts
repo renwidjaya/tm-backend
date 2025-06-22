@@ -252,9 +252,64 @@ const getUserDetail = async (
   }
 };
 
+/**
+ * Destroy User
+ * @param req 
+ * @param res 
+ * @param next 
+ * @returns 
+ */
+const destroyUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { id_user } = req.params;
+
+  const t = await db.transaction();
+
+  try {
+    const user = await User.findByPk(id_user, { transaction: t });
+    if (!user) {
+      await t.rollback();
+      res.status(404).json({ message: "User tidak ditemukan." });
+      return;
+    }
+
+    const karyawan = await Karyawan.findOne({
+      where: { id_user },
+      transaction: t,
+    });
+
+    // Hapus gambar profil jika ada
+    if (karyawan?.image_profil) {
+      try {
+        await deleteFromFirebase(karyawan.image_profil);
+      } catch (err: any) {
+        console.warn("Gagal hapus file dari Firebase:", err.message);
+      }
+    }
+
+    // Hapus data karyawan jika ada
+    if (karyawan) {
+      await karyawan.destroy({ transaction: t });
+    }
+
+    // Hapus data user
+    await user.destroy({ transaction: t });
+
+    await t.commit();
+    res.status(200).json({ message: "User berhasil dihapus." });
+  } catch (err) {
+    await t.rollback();
+    next(err);
+  }
+};
+
 export default {
   login,
   register,
   editUser,
   getUserDetail,
+  destroyUser,
 };
