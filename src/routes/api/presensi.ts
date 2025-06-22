@@ -22,9 +22,13 @@ router.put(
   controller.updatePresensi
 );
 
+router.post("/store", controller.createAdminPresensi);
+
+router.put("/update/:id_presensi", controller.updateAdminPresensi);
+
 router.post("/detail", controller.getPresensiDetail);
 
-router.delete("/karyawan/:id", controller.deletePresensi);
+router.delete("/destroy/:id_presensi", controller.deletePresensi);
 
 router.post("/statistik", controller.getPresensiStatistik);
 

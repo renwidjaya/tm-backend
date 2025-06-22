@@ -247,6 +247,108 @@ const updatePresensi = async (
 };
 
 /**
+ * Admin Add Presensi
+ * @param req 
+ * @param res 
+ * @param next 
+ */
+const createAdminPresensi = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const {
+      id_karyawan,
+      tanggal,
+      jam_masuk,
+      jam_pulang,
+      lokasi_masuk,
+      lokasi_pulang,
+      total_jam_lembur,
+      kategori,
+    } = req.body;
+
+    const karyawan = await Karyawan.findByPk(id_karyawan);
+    if (!karyawan) {
+      throw new CustomError(httpCode.badRequest, "Karyawan tidak ditemukan");
+    }
+
+    const existing = await Presensi.findOne({
+      where: { id_karyawan, tanggal },
+    });
+
+    if (existing) {
+      throw new CustomError(
+        httpCode.badRequest,
+        "Presensi sudah ada di tanggal ini"
+      );
+    }
+
+    const data = await Presensi.create({
+      id_karyawan,
+      tanggal,
+      jam_masuk,
+      jam_pulang,
+      lokasi_masuk,
+      lokasi_pulang,
+      total_jam_lembur,
+      kategori,
+    });
+
+    res.status(201).json({ message: "Presensi berhasil ditambahkan", data });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Admin Update Presensi
+ * @param req 
+ * @param res 
+ * @param next 
+ */
+const updateAdminPresensi = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const {
+      tanggal,
+      jam_masuk,
+      jam_pulang,
+      lokasi_masuk,
+      lokasi_pulang,
+      total_jam_lembur,
+      kategori,
+    } = req.body;
+    const { id_presensi } = req.params;
+
+    const presensi = await Presensi.findByPk(id_presensi);
+    if (!presensi) {
+      throw new CustomError(httpCode.notFound, "Presensi tidak ditemukan");
+    }
+
+    await presensi.update({
+      tanggal,
+      jam_masuk,
+      jam_pulang,
+      lokasi_masuk,
+      lokasi_pulang,
+      total_jam_lembur,
+      kategori,
+    });
+
+    res
+      .status(httpCode.ok)
+      .json({ message: "Presensi berhasil diperbarui", data: presensi });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Get Presensi Detail
  * @param req
  * @param res
@@ -301,10 +403,10 @@ const deletePresensi = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { id } = req.params;
+    const { id_presensi } = req.params;
 
     const deleted = await Presensi.destroy({
-      where: { id_absensi: id },
+      where: { id_absensi: id_presensi },
     });
 
     if (deleted === 0) {
@@ -701,6 +803,8 @@ export default {
   getDetailPresensi,
   createPresensi,
   updatePresensi,
+  createAdminPresensi,
+  updateAdminPresensi,
   getPresensiDetail,
   deletePresensi,
   getPresensiStatistik,
