@@ -10,7 +10,10 @@ import CustomError from "@middlewares/error-handler";
 import { Karyawan, Presensi, User } from "@models/index";
 import { NextFunction, Request, Response } from "express";
 import { EnumKategoriPresensi } from "@models/presensi.model";
-import { uploadToFirebase } from "@utils/upload-to-firebase";
+import {
+  deleteFromFirebase,
+  uploadToFirebase,
+} from "@utils/upload-to-firebase";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -248,9 +251,9 @@ const updatePresensi = async (
 
 /**
  * Admin Add Presensi
- * @param req 
- * @param res 
- * @param next 
+ * @param req
+ * @param res
+ * @param next
  */
 const createAdminPresensi = async (
   req: Request,
@@ -304,9 +307,9 @@ const createAdminPresensi = async (
 
 /**
  * Admin Update Presensi
- * @param req 
- * @param res 
- * @param next 
+ * @param req
+ * @param res
+ * @param next
  */
 const updateAdminPresensi = async (
   req: Request,
@@ -405,13 +408,32 @@ const deletePresensi = async (
   try {
     const { id_presensi } = req.params;
 
-    const deleted = await Presensi.destroy({
-      where: { id_absensi: id_presensi },
-    });
+    // Cari dulu data presensi-nya
+    const presensi = await Presensi.findByPk(id_presensi);
 
-    if (deleted === 0) {
+    if (!presensi) {
       throw new CustomError(httpCode.notFound, "Data tidak ditemukan");
     }
+
+    // Hapus foto dari Firebase jika ada
+    try {
+      if (presensi.foto_masuk) {
+        await deleteFromFirebase(presensi.foto_masuk);
+      }
+      if (presensi.foto_pulang) {
+        await deleteFromFirebase(presensi.foto_pulang);
+      }
+    } catch (err: any) {
+      throw new CustomError(
+        httpCode.badRequest,
+        `Gagal hapus file dari Firebase ${err.message}`
+      );
+    }
+
+    // Hapus data dari database
+    await Presensi.destroy({
+      where: { id_absensi: id_presensi },
+    });
 
     res.status(httpCode.ok).json({ message: "Data berhasil dihapus" });
   } catch (error) {
