@@ -590,6 +590,7 @@ const downloadPresensiExcel = async (
       { header: "Jam Masuk", key: "jam_masuk", width: 12 },
       { header: "Jam Pulang", key: "jam_pulang", width: 12 },
       { header: "Kategori", key: "kategori", width: 18 },
+      { header: "Total Lembur", key: "total_lembur", width: 18 },
     ];
 
     // Data Rows
@@ -605,6 +606,7 @@ const downloadPresensiExcel = async (
           jam_masuk: presensi.jam_masuk,
           jam_pulang: presensi.jam_pulang,
           kategori: presensi.kategori,
+          total_lembur: presensi.total_jam_lembur,
         });
       });
     });
